@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="zhiyaoXu"><meta name="copyright" content="zhiyaoXu"><meta name="generator" content="Hexo 6.2.0"><meta name="theme" content="hexo-theme-yun"><title>曲线拟合、函数插值与线性回归 | Void</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/star-markdown-css@0.3.3/dist/yun/yun-markdown.min.css"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/prism-theme-vars/base.css"><script src="https://fastly.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".markdown-body img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link rel="stylesheet" type="text/css" href="https://fastly.jsdelivr.net/npm/katex@latest/dist/katex.min.css"><script defer src="https://fastly.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script><link rel="stylesheet" type="text/css" href="https://fastly.jsdelivr.net/npm/katex@latest/dist/contrib/copy-tex.min.css"><script defer src="https://fastly.jsdelivr.net/npm/katex@latest/dist/contrib/copy-tex.min.js"></script><script defer src="https://fastly.jsdelivr.net/npm/katex@latest/dist/contrib/auto-render.min.js"></script><script type="module">import { renderKatex } from '/js/utils.js'
+document.addEventListener("DOMContentLoaded", () => {
+  renderKatex({
+    ...{},
+    ...undefined?.options,
+  });
+});</script><link rel="icon" type="image/svg+xml" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#0078E7"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fastly.jsdelivr.net/npm/" crossorigin><script id="yun-config">
+    window.Yun = {}
+    window.CONFIG = {"hostname":"xzyvoid.github.io","root":"/","title":"阿姚的小站","version":"1.10.4","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}.","hits":"${hits} results found","hits_time":"${hits} results found in ${time} ms"},"anonymous_image":"https://cdn.yunyoujun.cn/img/avatar/none.jpg","say":{"api":"https://el-bot-api.vercel.app/api/words/young"},"fireworks":{"colors":null},"vendors":{"darken":"https://fastly.jsdelivr.net/npm/darken@1.5.0"}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/hexo-theme-yun.js" type="module"></script><meta name="description" content="用较简单的函数来近似复杂函数的问题，就是函数逼近问题，曲线拟合和函数插值是数值分析中常用的两种函数逼近方法。在整体上要求拟合的比较好，就是曲线拟合问题；要求简单函数的曲线通过所有的给定点，就是函数插值问题，可以通过matlab快速地利用离散点来获得函数曲线。线性问题一般易于讨论和研究。因此，线性拟合坐属曲线拟合的一种，研究加入了回归分析，用以体现拟合曲线的数理统计意义，称为线性回归。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="曲线拟合、函数插值与线性回归">
+<meta property="og:url" content="http://xzyvoid.github.io/post/xxhg.html">
+<meta property="og:site_name" content="Void">
+<meta property="og:description" content="用较简单的函数来近似复杂函数的问题，就是函数逼近问题，曲线拟合和函数插值是数值分析中常用的两种函数逼近方法。在整体上要求拟合的比较好，就是曲线拟合问题；要求简单函数的曲线通过所有的给定点，就是函数插值问题，可以通过matlab快速地利用离散点来获得函数曲线。线性问题一般易于讨论和研究。因此，线性拟合坐属曲线拟合的一种，研究加入了回归分析，用以体现拟合曲线的数理统计意义，称为线性回归。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://xzyvoid.github.io/post/xxhg/xxhg1.png">
+<meta property="og:image" content="http://xzyvoid.github.io/post/xxhg/xxhg2.png">
+<meta property="og:image" content="http://xzyvoid.github.io/post/xxhg/xxhg3.png">
+<meta property="article:published_time" content="2022-07-14T08:44:12.000Z">
+<meta property="article:modified_time" content="2022-08-29T12:56:07.079Z">
+<meta property="article:author" content="zhiyaoXu">
+<meta property="article:tag" content="数值分析">
+<meta property="article:tag" content="矩阵求导">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://xzyvoid.github.io/post/xxhg/xxhg1.png"><script>(function() {
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const setting = localStorage.getItem('darken-mode') || 'auto'
+  if (setting === 'dark' || (prefersDark && setting !== 'light'))
+    document.documentElement.classList.toggle('dark', true)
+})()</script><!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head><body><script src="https://code.iconify.design/2/2.1.1/iconify.min.js"></script><script>// Define global variable
+IconifyProviders = {
+  // Empty prefix: overwrite default API provider configuration
+  '': {
+    // Use custom API first, use Iconify public API as backup
+    resources: [
+        'https://api.iconify.design',
+    ],
+    // Wait for 1 second before switching API hosts
+    rotate: 1000,
+  },
+};</script><script defer src="https://fastly.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js" type="module"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js" type="module"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="Table of Contents"><span class="icon iconify" data-icon="ri:list-ordered"></span></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="Overview"><span class="icon iconify" data-icon="ri:passport-line"></span></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="zhiyaoXu"><img width="96" loading="lazy" src="https://pic.imgdb.cn/item/62c7a44cf54cd3f9379abc52.jpg" alt="zhiyaoXu"></a><div class="site-author-name"><a href="/about/">zhiyaoXu</a></div><span class="site-name">Void</span><sub class="site-subtitle"></sub><div class="site-description"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="Home"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:home-4-line"></span></span></a><div class="site-state-item"><a href="/archives/" title="Archives"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:archive-line"></span></span><span class="site-state-item-count">6</span></a></div><div class="site-state-item"><a href="/categories/" title="Categories"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:folder-2-line"></span></span><span class="site-state-item-count">2</span></a></div><div class="site-state-item"><a href="/tags/" title="Tags"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="site-state-item-count">6</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:settings-line"></span></span></a></nav><hr style="margin-bottom:0.5rem"><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><span class="icon iconify" data-icon="ri:genderless-line"></span></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><span class="icon iconify" data-icon="ri:contrast-2-line"></span></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B2%E7%BA%BF%E6%8B%9F%E5%90%88%E4%B8%8E%E6%9C%80%E5%B0%8F%E4%BA%8C%E4%B9%98%E6%B3%95"><span class="toc-number">1.</span> <span class="toc-text">曲线拟合与最小二乘法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%80%E5%85%83%E5%9B%9E%E5%BD%92%E6%96%B9%E7%A8%8B%E7%BB%8F%E9%AA%8C%E5%9B%9E%E5%BD%92%E6%96%B9%E7%A8%8B"><span class="toc-number">1.1.</span> <span class="toc-text">一元回归方程（经验回归方程）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9A%E5%85%83%E5%9B%9E%E5%BD%92%E6%96%B9%E7%A8%8B"><span class="toc-number">1.2.</span> <span class="toc-text">多元回归方程</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9C%80%E5%B0%8F%E4%BA%8C%E4%B9%98%E6%B3%95"><span class="toc-number">1.2.1.</span> <span class="toc-text">最小二乘法</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E6%B1%82%E5%AF%BC"><span class="toc-number">1.2.2.</span> <span class="toc-text">矩阵求导</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%9B%9E%E5%88%B0%E6%9C%80%E5%B0%8F%E4%BA%8C%E4%B9%98%E6%B3%95"><span class="toc-number">1.2.3.</span> <span class="toc-text">回到最小二乘法</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E6%8F%92%E5%80%BC"><span class="toc-number">2.</span> <span class="toc-text">函数插值</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article" style="--smc-primary:#0078E7;"><link itemprop="mainEntityOfPage" href="http://xzyvoid.github.io/post/xxhg.html"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="zhiyaoXu"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Void"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">曲线拟合、函数插值与线性回归</h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-line"></span></span> <time title="Created: 2022-07-14 16:44:12" itemprop="dateCreated datePublished" datetime="2022-07-14T16:44:12+08:00">2022-07-14</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-2-line"></span></span> <time title="Modified: 2022-08-29 20:56:07" itemprop="dateModified" datetime="2022-08-29T20:56:07+08:00">2022-08-29</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="Word count in article"><span class="icon iconify" data-icon="ri:file-word-line"></span></span> <span title="Word count in article">1.3k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Reading time"><span class="icon iconify" data-icon="ri:timer-line"></span></span> <span title="Reading time">5m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><span class="icon iconify" data-icon="ri:folder-line"></span></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/%E6%95%B0%E6%A8%A1/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">数模</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E6%95%B0%E5%80%BC%E5%88%86%E6%9E%90/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">数值分析</span></a><a class="tag-item" href="/tags/%E7%9F%A9%E9%98%B5%E6%B1%82%E5%AF%BC/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">矩阵求导</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body"><p>用较简单的函数来近似复杂函数的问题，就是函数逼近问题，曲线拟合和函数插值是数值分析中常用的两种函数逼近方法。在整体上要求拟合的比较好，就是曲线拟合问题；要求简单函数的曲线通过所有的给定点，就是函数插值问题，可以通过matlab快速地利用离散点来获得函数曲线。线性问题一般易于讨论和研究。因此，线性拟合坐属曲线拟合的一种，研究加入了回归分析，用以体现拟合曲线的数理统计意义，称为线性回归。</p>
+<span id="more"></span>
+<h3 id="曲线拟合与最小二乘法">曲线拟合与最小二乘法</h3>
+<h4 id="一元回归方程经验回归方程">一元回归方程（经验回归方程）</h4>
+<p>一元线性回归方程的模型为： <span class="math display">\[
+Y=\beta_0+\beta_1X+e,\quad E(e)=0\\Y=f(x)+e
+\]</span></p>
+<p><span class="math inline">\(f(x)\)</span>为<span class="math inline">\(X\)</span>能决定的部分,<span class="math inline">\(e\)</span>为其他未考虑的因素，每次带入的<span class="math inline">\(x_i\)</span>不同，对应的<span class="math inline">\(e_i\)</span>也不同，但总体<span class="math inline">\(e\)</span>需要满足零均值、等方差、不相关的要求。</p>
+<p>其中<span class="math inline">\(\beta_0和\beta_1\)</span>的值可以用简单的统计方法求出。</p>
+<blockquote>
+<p>解上述方程可以求得a和b。通常将a和b的计算公式写为如下形式：</p>
+<img src="/post/xxhg/xxhg1.png" class title="xxhg1" loading="lazy">
+</blockquote>
+<h4 id="多元回归方程">多元回归方程</h4>
+<p>多元回归方程的模型为： <span class="math display">\[
+Y=\beta_0+\beta_1X_1+...+\beta_{p-1}X_{p-1}+e
+\]</span></p>
+<p>假设对<span class="math inline">\(Y、X、...X^{P-1}\)</span>得到了n组观测值： <span class="math display">\[
+y_i、X_{i1}、X_{i2}、...X_{in}
+\]</span> 注意，这里除去<span class="math inline">\(y_i\)</span>，共有<span class="math inline">\(p*n\)</span>组数据（默认<span class="math inline">\(\beta_0\)</span>是<span class="math inline">\(X_0\)</span>的系数，且<span class="math inline">\(X_0\)</span>每次取值均为1）。</p>
+<p>则，多元回归模型的矩阵形式为： <span class="math display">\[
+y=X\beta+e
+\]</span></p>
+<p>其中： <span class="math display">\[
+y=\begin{bmatrix} y_1 \\ y_2 \\ \vdots \\y_n \end{bmatrix},
+X=\begin{bmatrix}1 &amp; x_{11} &amp; \cdots &amp; x_{1p-1} \\ 1 &amp; x_{21} &amp; \cdots &amp; x_{2p-1}\\ \vdots &amp; \vdots &amp; \vdots    &amp; \vdots \\ 1 &amp; x_{n1} &amp; x_{n2} &amp; x_{np-1}\end{bmatrix},
+\beta=\begin{bmatrix} \beta_1 \\ \beta_2 \\ \vdots \\\beta_{p-1} \end{bmatrix},
+e=\begin{bmatrix} e_1 \\ e_2 \\ \vdots \\e_n \end{bmatrix}
+\]</span></p>
+<p>（其中，<span class="math inline">\(y\)</span>称为观测向量，<span class="math inline">\(X\)</span>称为已知矩阵，<span class="math inline">\(\beta\)</span>称为未知参数向量，<span class="math inline">\(e\)</span>称为随机误差向量）</p>
+<h5 id="最小二乘法">最小二乘法</h5>
+<p>任务是要解出<span class="math inline">\(\beta\)</span>这个未知参数向量。寻找最优的<span class="math inline">\(\beta\)</span>，它能使<span class="math inline">\(e\)</span>的长度最小，简单来说，由于追求求导后运算的方便，一般是使<span class="math inline">\(e\)</span>的长度的平方最小，即： <span class="math display">\[
+minQ(\beta)=\Vert {e} \Vert^2=\Vert {y-X\beta} \Vert^2=(y-X\beta)^T(y-X\beta)
+\]</span></p>
+<p>我们想要求出<span class="math inline">\(\beta\)</span>的估计<span class="math inline">\(\hat{\beta}\)</span>，就得求出使这个式子最小值点，这就需要用到矩阵求导的知识对这个式子进行求导。</p>
+<h5 id="矩阵求导">矩阵求导</h5>
+<p>矩阵，也可以说成是向量，对于一个<span class="math inline">\(Y=f(x)\)</span>来说，<span class="math inline">\(Y\)</span>和<span class="math inline">\(x\)</span>既可以是标量，也可以是向量（也就是矩阵）。因此，我们既可以对一个标量求它的向量自变量的导数，也可以对一个向量求它的标量或向量自变量的导数。这和标量对标量求导是一样的，只不过是有不同的规则。在矩阵的运用上，这点已经十分成熟，向量的灵活使用，大大减小了计算机的运算量。</p>
+<p>矩阵求导有着这样的口诀：</p>
+<ul>
+<li>标量不变，向量拉伸</li>
+<li><span class="math inline">\(Y\)</span>横向拉，<span class="math inline">\(x\)</span>纵向拉</li>
+</ul>
+<p>例如：（部分负号使用不严谨，不过不影响理解）</p>
+<img src="/post/xxhg/xxhg2.png" class title="xxhg2" loading="lazy">
+<img src="/post/xxhg/xxhg3.png" class title="xxhg3" loading="lazy">
+<p>都是向量则分个先后分别拉伸就行。</p>
+<p>依据这个原理我们可以得到两条矩阵求导的常用结论：（这里<span class="math inline">\(A=a^T\)</span>）</p>
+<ul>
+<li><p>当<span class="math inline">\(f(x)=\sum_{i=1}^na_ix_i=A^Tx=x^TA\)</span>时，<span class="math inline">\(\frac{df(x)}{dx}=\frac{dA^Tx}{dx}=\frac{dx^TA}{dx}=A\)</span></p></li>
+<li><p>当<span class="math inline">\(f(x)=\sum_{i=1}^n\sum_{j=1}^na_ix_ix_j=x^TAx\)</span>时，<span class="math inline">\(\frac{df(x)}{dx}=\frac{dx^TAx}{dx}=(A+A^T)x\)</span></p></li>
+</ul>
+<h5 id="回到最小二乘法">回到最小二乘法</h5>
+<p>让我们把这个式子的右边继续写下去： <span class="math display">\[
+minQ(\beta)=\Vert {e} \Vert^2=\Vert {y-X\beta} \Vert^2=(y-X\beta)^T(y-X\beta)\\
+=y^Ty- \beta^T X^T y-y^TX\beta + \beta^TX^TX\beta\\
+=y^Ty- 2y^TX\beta + \beta^TX^TX\beta
+\]</span> 将这个式子左右两边对<span class="math inline">\(\beta\)</span>求导： <span class="math display">\[
+minQ(\beta)&#39;=0-2(y^TX)^T+(X^TX+(X^TX)^T)\beta\\
+=-2X^Ty+2X^TX\beta
+\]</span> 令这个式子等于0，可得： <span class="math display">\[
+\hat{\beta}=(X^TX)^{-1}X^Ty
+\]</span> 由此便可以通过已知的<span class="math inline">\(X、y\)</span>求出<span class="math inline">\(\hat{\beta}\)</span>。得到拟合的多元回归方程。</p>
+<h3 id="函数插值">函数插值</h3>
+<p>也是一种函数逼近的方法，给人直观的感受就是用平滑的曲线连接一堆离散的点。得到的这一曲线可以用于计算某些离散点之间未给出点的值，起到最大限度根据离散点还原原连续函数的效果。</p>
+<p>借助强大的matlab，我们通过spline(x值，y值，插值区间)函数，就可以很便捷的完成三次样条插值。</p>
+<p>同时，可以用pp=spline(x,y)来获取三次样条插值函数，并接着可以使用y=ppval(pp，自变量)，来求出插值函数上某点的y值，非常好用~~。</p>
+</div></section><div id="reward-container"><span class="hty-icon-button button-glow" id="reward-button" title="Donate" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === &quot;none&quot;) ? &quot;block&quot; : &quot;none&quot;;"><span class="icon iconify" data-icon="ri:hand-coin-line"></span></span><div id="reward-comment">I'm so cute. Please give me money.</div></div><ul class="post-copyright"><li class="post-copyright-author"><strong>Post author: </strong>zhiyaoXu</li><li class="post-copyright-link"><strong>Post link: </strong><a href="http://xzyvoid.github.io/post/xxhg.html" title="曲线拟合、函数插值与线性回归">http://xzyvoid.github.io/post/xxhg.html</a></li><li class="post-copyright-license"><strong>Copyright Notice: </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><span class="icon iconify" data-icon="ri:creative-commons-line"></span><span class="icon iconify" data-icon="ri:creative-commons-by-line"></span><span class="icon iconify" data-icon="ri:creative-commons-nc-line"></span><span class="icon iconify" data-icon="ri:creative-commons-sa-line"></span></a> unless otherwise stated.</li></ul></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/post/chaff.html" rel="prev" title="差分法"><span class="icon iconify" data-icon="ri:arrow-left-s-line"></span><span class="post-nav-text">差分法</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/post/zhongxxl.html" rel="next" title="三角形重心序列问题"><span class="post-nav-text">三角形重心序列问题</span><span class="icon iconify" data-icon="ri:arrow-right-s-line"></span></a></div></div></div><div class="hty-card" id="comment"></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2019 – 2022 </span><span class="with-love" id="animate"><span class="icon iconify" data-icon="ri:cloud-line"></span></span><span class="author"> zhiyaoXu</span></div><div class="powered"><span>Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> v6.2.0</span><span class="footer-separator">|</span><span>Theme - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.10.4</span></div></footer></div><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><span class="icon iconify" data-icon="ri:arrow-up-s-line"></span><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a></body></html>

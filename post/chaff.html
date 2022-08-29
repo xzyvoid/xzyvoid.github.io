@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#0078E7"><meta name="author" content="zhiyaoXu"><meta name="copyright" content="zhiyaoXu"><meta name="generator" content="Hexo 6.2.0"><meta name="theme" content="hexo-theme-yun"><title>差分法 | Void</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/star-markdown-css@0.3.3/dist/yun/yun-markdown.min.css"><link rel="stylesheet" href="https://fastly.jsdelivr.net/npm/prism-theme-vars/base.css"><script src="https://fastly.jsdelivr.net/npm/scrollreveal/dist/scrollreveal.min.js" defer></script><script>function initScrollReveal() {
+  [".post-card",".markdown-body img"].forEach((target)=> {
+    ScrollReveal().reveal(target);
+  })
+}
+document.addEventListener("DOMContentLoaded", initScrollReveal);
+document.addEventListener("pjax:success", initScrollReveal);
+</script><link rel="stylesheet" type="text/css" href="https://fastly.jsdelivr.net/npm/katex@latest/dist/katex.min.css"><script defer src="https://fastly.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script><link rel="stylesheet" type="text/css" href="https://fastly.jsdelivr.net/npm/katex@latest/dist/contrib/copy-tex.min.css"><script defer src="https://fastly.jsdelivr.net/npm/katex@latest/dist/contrib/copy-tex.min.js"></script><script defer src="https://fastly.jsdelivr.net/npm/katex@latest/dist/contrib/auto-render.min.js"></script><script type="module">import { renderKatex } from '/js/utils.js'
+document.addEventListener("DOMContentLoaded", () => {
+  renderKatex({
+    ...{},
+    ..."ture"?.options,
+  });
+});</script><link rel="icon" type="image/svg+xml" href="/yun.svg"><link rel="mask-icon" href="/yun.svg" color="#0078E7"><link rel="preload" href="/css/hexo-theme-yun.css" as="style"><link rel="prefetch" href="/js/sidebar.js" as="script"><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fastly.jsdelivr.net/npm/" crossorigin><script id="yun-config">
+    window.Yun = {}
+    window.CONFIG = {"hostname":"xzyvoid.github.io","root":"/","title":"阿姚的小站","version":"1.10.4","mode":"auto","copycode":true,"page":{"isPost":true},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}.","hits":"${hits} results found","hits_time":"${hits} results found in ${time} ms"},"anonymous_image":"https://cdn.yunyoujun.cn/img/avatar/none.jpg","say":{"api":"https://el-bot-api.vercel.app/api/words/young"},"fireworks":{"colors":null},"vendors":{"darken":"https://fastly.jsdelivr.net/npm/darken@1.5.0"}};
+  </script><link rel="stylesheet" href="/css/hexo-theme-yun.css"><script src="/js/hexo-theme-yun.js" type="module"></script><meta name="description" content="不同的差分法方法在计算机上有着不同的解法，更加精确的差分方法也对应着更高的精度（更容易收敛），作为计算机仿真偏微分方程的重要内容，值得记录一下。并且记录下各个方法的\(A\)矩阵，便于后续的使用。（本差分的思想都是依据泰勒公式，且主要是记录几种差分方法，其原理就不做介绍）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="差分法">
+<meta property="og:url" content="http://xzyvoid.github.io/post/chaff.html">
+<meta property="og:site_name" content="Void">
+<meta property="og:description" content="不同的差分法方法在计算机上有着不同的解法，更加精确的差分方法也对应着更高的精度（更容易收敛），作为计算机仿真偏微分方程的重要内容，值得记录一下。并且记录下各个方法的\(A\)矩阵，便于后续的使用。（本差分的思想都是依据泰勒公式，且主要是记录几种差分方法，其原理就不做介绍）">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-08-17T03:46:07.000Z">
+<meta property="article:modified_time" content="2022-08-27T14:29:01.411Z">
+<meta property="article:author" content="zhiyaoXu">
+<meta property="article:tag" content="数值分析">
+<meta name="twitter:card" content="summary"><script>(function() {
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  const setting = localStorage.getItem('darken-mode') || 'auto'
+  if (setting === 'dark' || (prefersDark && setting !== 'light'))
+    document.documentElement.classList.toggle('dark', true)
+})()</script><!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --></head><body><script src="https://code.iconify.design/2/2.1.1/iconify.min.js"></script><script>// Define global variable
+IconifyProviders = {
+  // Empty prefix: overwrite default API provider configuration
+  '': {
+    // Use custom API first, use Iconify public API as backup
+    resources: [
+        'https://api.iconify.design',
+    ],
+    // Wait for 1 second before switching API hosts
+    rotate: 1000,
+  },
+};</script><script defer src="https://fastly.jsdelivr.net/npm/animejs@latest"></script><script defer src="/js/ui/fireworks.js" type="module"></script><canvas class="fireworks"></canvas><div class="container"><a class="sidebar-toggle hty-icon-button" id="menu-btn"><div class="hamburger hamburger--spin" type="button"><span class="hamburger-box"><span class="hamburger-inner"></span></span></div></a><div class="sidebar-toggle sidebar-overlay"></div><aside class="sidebar"><script src="/js/sidebar.js" type="module"></script><ul class="sidebar-nav"><li class="sidebar-nav-item sidebar-nav-toc hty-icon-button sidebar-nav-active" data-target="post-toc-wrap" title="Table of Contents"><span class="icon iconify" data-icon="ri:list-ordered"></span></li><li class="sidebar-nav-item sidebar-nav-overview hty-icon-button" data-target="site-overview-wrap" title="Overview"><span class="icon iconify" data-icon="ri:passport-line"></span></li></ul><div class="sidebar-panel" id="site-overview-wrap"><div class="site-info fix-top"><a class="site-author-avatar" href="/about/" title="zhiyaoXu"><img width="96" loading="lazy" src="https://pic.imgdb.cn/item/62c7a44cf54cd3f9379abc52.jpg" alt="zhiyaoXu"></a><div class="site-author-name"><a href="/about/">zhiyaoXu</a></div><span class="site-name">Void</span><sub class="site-subtitle"></sub><div class="site-description"></div></div><nav class="site-state"><a class="site-state-item hty-icon-button icon-home" href="/" title="Home"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:home-4-line"></span></span></a><div class="site-state-item"><a href="/archives/" title="Archives"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:archive-line"></span></span><span class="site-state-item-count">6</span></a></div><div class="site-state-item"><a href="/categories/" title="Categories"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:folder-2-line"></span></span><span class="site-state-item-count">2</span></a></div><div class="site-state-item"><a href="/tags/" title="Tags"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="site-state-item-count">6</span></a></div><a class="site-state-item hty-icon-button" target="_blank" rel="noopener" href="https://yun.yunyoujun.cn" title="文档"><span class="site-state-item-icon"><span class="icon iconify" data-icon="ri:settings-line"></span></span></a></nav><hr style="margin-bottom:0.5rem"><hr style="margin:0.5rem 1rem"><div class="links"><a class="links-item hty-icon-button" href="/links/" title="我的小伙伴们" style="color:dodgerblue"><span class="icon iconify" data-icon="ri:genderless-line"></span></a></div><br><a class="links-item hty-icon-button" id="toggle-mode-btn" href="javascript:;" title="Mode" style="color: #f1cb64"><span class="icon iconify" data-icon="ri:contrast-2-line"></span></a></div><div class="sidebar-panel sidebar-panel-active" id="post-toc-wrap"><div class="post-toc"><div class="post-toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%AE%E5%88%86%E6%B3%95"><span class="toc-number">1.</span> <span class="toc-text">差分法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%91%E5%89%8D%E5%B7%AE%E5%88%86"><span class="toc-number">2.</span> <span class="toc-text">向前差分</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%91%E5%90%8E%E5%B7%AE%E5%88%86"><span class="toc-number">3.</span> <span class="toc-text">向后差分</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E7%BA%A7%E5%B7%AE%E5%88%86"><span class="toc-number">4.</span> <span class="toc-text">二级差分</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8"><span class="toc-number">5.</span> <span class="toc-text">注</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-number">6.</span> <span class="toc-text">后记</span></a></li></ol></div></div></div></aside><main class="sidebar-translate" id="content"><div id="post"><article class="hty-card post-block" itemscope itemtype="https://schema.org/Article" style="--smc-primary:#0078E7;"><link itemprop="mainEntityOfPage" href="http://xzyvoid.github.io/post/chaff.html"><span hidden itemprop="author" itemscope itemtype="https://schema.org/Person"><meta itemprop="name" content="zhiyaoXu"><meta itemprop="description"></span><span hidden itemprop="publisher" itemscope itemtype="https://schema.org/Organization"><meta itemprop="name" content="Void"></span><header class="post-header"><h1 class="post-title" itemprop="name headline">差分法</h1><div class="post-meta"><div class="post-time" style="display:block"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-line"></span></span> <time title="Created: 2022-08-17 11:46:07" itemprop="dateCreated datePublished" datetime="2022-08-17T11:46:07+08:00">2022-08-17</time><span class="post-meta-divider">-</span><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:calendar-2-line"></span></span> <time title="Modified: 2022-08-27 22:29:01" itemprop="dateModified" datetime="2022-08-27T22:29:01+08:00">2022-08-27</time></div><span class="post-count"><span class="post-symbolcount"><span class="post-meta-item-icon" title="Word count in article"><span class="icon iconify" data-icon="ri:file-word-line"></span></span> <span title="Word count in article">1.5k</span><span class="post-meta-divider">-</span><span class="post-meta-item-icon" title="Reading time"><span class="icon iconify" data-icon="ri:timer-line"></span></span> <span title="Reading time">6m</span></span></span><div class="post-classify"><span class="post-category"> <span class="post-meta-item-icon" style="margin-right:3px;"><span class="icon iconify" data-icon="ri:folder-line"></span></span><span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a class="category-item" href="/categories/%E6%95%B0%E6%A8%A1/" style="--text-color:var(--hty-text-color)" itemprop="url" rel="index"><span itemprop="text">数模</span></a></span></span><span class="post-tag"><span class="post-meta-divider">-</span><a class="tag-item" href="/tags/%E6%95%B0%E5%80%BC%E5%88%86%E6%9E%90/" style="--text-color:var(--hty-text-color)"><span class="post-meta-item-icon"><span class="icon iconify" data-icon="ri:price-tag-3-line"></span></span><span class="tag-name">数值分析</span></a></span></div></div></header><section class="post-body" itemprop="articleBody"><div class="post-content markdown-body"><p>不同的差分法方法在计算机上有着不同的解法，更加精确的差分方法也对应着更高的精度（更容易收敛），作为计算机仿真偏微分方程的重要内容，值得记录一下。并且记录下各个方法的<span class="math inline">\(A\)</span>矩阵，便于后续的使用。（本差分的思想都是依据泰勒公式，且主要是记录几种差分方法，其原理就不做介绍）</p>
+<span id="more"></span>
+<h2 id="差分法">差分法</h2>
+<p>计算机无法处理连续的问题，因此需要借助差分将连续的问题离散化。对于常见的偏微分或者微分方程计算中，差分法的体现就在于用<span class="math inline">\(dx\)</span>将整个定义域细分，用每个<span class="math inline">\(dx\)</span>开头、结尾或开头和结尾平均的斜率来代替偏导或导数。当<span class="math inline">\(dx\)</span>取值合适的时候，能起到很好的计算机仿真作用。</p>
+<h2 id="向前差分">向前差分</h2>
+<p>我们举例就采用热传导中的傅里叶定律： <span class="math display">\[
+\frac {\partial T}{\partial t}=\alpha \frac {\partial^2 T}{\partial^2 x}
+\]</span> 首先，对应情景中的<span class="math inline">\(x、t\)</span>，我们取<span class="math inline">\(x=mdx, t=ndt\)</span>,依据上述的替代思想，有： <span class="math display">\[
+\frac{T^{n+1}_m-T^n_m}{dt}=\alpha\frac{T^n_{m+1}-2T^n_m+T^n_{m-1}}{dx^2}
+\]</span> 向前的关键在于左边的偏导数是用<span class="math inline">\(\frac{T^{n+1}_m-T^n_m}{dt}\)</span>替代的，取的是<span class="math inline">\(T^{n+1}_m-T^n_m\)</span>，而不是<span class="math inline">\(T^n_m-T^{n-1}_m\)</span>。这有什么影响呢？对于向前和向后来说，他们的精度是一样的。但是由于显式和隐式的区别，前者能迭代算出，而后者不行，需要使用追赶法（或者直接matlab把矩阵除过去）。因此他们的计算编程方法不同。</p>
+<p>向前差分写成矩阵形式： <span class="math display">\[
+\begin{bmatrix}  T^{n+1}_1\\  T^{n+1}_2 \\ \vdots\\ T^{n+1}_{m-1}\\T^{n+1}_{m} \end{bmatrix}
+=
+\begin{bmatrix}  T^{n}_1\\  T^{n}_2 \\ \vdots\\ T^{n}_{m-1}\\T^{n}_{m} \end{bmatrix}
++
+\frac{\alpha dt}{dx^2}
+\begin{bmatrix}  -2 &amp; 1 &amp; \cdots &amp; \cdots \\  1 &amp; -2 &amp; 1 &amp; \cdots \\ &amp; \ddots &amp; \ddots &amp; \ddots \\ \cdots &amp; 1 &amp;-2 &amp;1 \\\ \cdots &amp; \cdots &amp;1 &amp; -2 \end{bmatrix}
+\begin{bmatrix}  T^{n}_1\\  T^{n}_2 \\ \vdots\\ T^{n}_{m-1}\\T^{n}_{m} \end{bmatrix}
+\]</span> 进行计算机仿真时，只需要设定<span class="math inline">\(\alpha、dx、dt\)</span>与<span class="math inline">\(A\)</span>矩阵—— <span class="math display">\[
+A=
+\begin{bmatrix}  -2 &amp; 1 &amp; \cdots &amp; \cdots \\  1 &amp; -2 &amp; 1 &amp; \cdots \\ &amp; \ddots &amp; \ddots &amp; \ddots \\ \cdots &amp; 1 &amp;-2 &amp;1 \\\ \cdots &amp; \cdots &amp;1 &amp; -2 \end{bmatrix}
+\]</span> 即可通过每一个<span class="math inline">\(T^{n}_{m}\)</span>迭代计算出<span class="math inline">\(T^{n+1}_{m}\)</span>。</p>
+<h2 id="向后差分">向后差分</h2>
+<p>有了向前差分的先见，我们直接给出傅里叶定律向后差分的形式： <span class="math display">\[
+\frac{T^{n}_m-T^{n-1}_m}{dt}=\alpha\frac{T^n_{m+1}-2T^n_m+T^n_{m-1}}{dx^2}
+\]</span> 这一步向后的关键就在于此时的<span class="math inline">\(T^{n}_m和T^{n-1}_m\)</span>没有办法写成<span class="math inline">\(T^{n}_m=XT^{n-1}_m\)</span>，形成迭代关系（因而称为隐式）。这就需要用到不同的计算方法，但重点是在于<span class="math inline">\(A\)</span>矩阵的变化。</p>
+<p>我们设<span class="math inline">\(\lambda=\frac{\alpha dt}{dx^2}\)</span>此时我们需要将式子改写成： <span class="math display">\[
+-\lambda T^n_{m-1}+(1+2\lambda)T^n_m-\lambda T^n_{m+1}=T^{n-1}_m
+\]</span> 即： <span class="math display">\[
+\begin{bmatrix}  1+2\lambda &amp; -\lambda &amp; \cdots &amp; \cdots \\  -\lambda &amp; 1+2\lambda &amp; -\lambda &amp; \cdots \\ &amp; \ddots &amp; \ddots &amp; \ddots \\ \cdots &amp; -\lambda &amp; 1+2\lambda &amp; -\lambda \\ \cdots &amp; \cdots &amp; -\lambda &amp; 1+2\lambda \end{bmatrix}
+\begin{bmatrix}  T^{n}_1\\  T^{n}_2 \\ \vdots\\ T^{n}_{m-1}\\T^{n}_{m} \end{bmatrix}
+=
+\begin{bmatrix}  T^{n-1}_1\\  T^{n-1}_2 \\ \vdots\\ T^{n-1}_{m-1}\\T^{n-1}_{m} \end{bmatrix}
+\]</span> 其中设置： <span class="math display">\[
+A=\begin{bmatrix}  1+2\lambda &amp; -\lambda &amp; \cdots &amp; \cdots \\  -\lambda &amp; 1+2\lambda &amp; -\lambda &amp; \cdots \\ &amp; \ddots &amp; \ddots &amp; \ddots \\ \cdots &amp; -\lambda &amp; 1+2\lambda &amp; -\lambda \\ \cdots &amp; \cdots &amp; -\lambda &amp; 1+2\lambda \end{bmatrix}
+\]</span></p>
+<p>看起来像个反显式是吗？把A矩阵除过去或者使用追赶法，就可以迭代出新的温度啦。</p>
+<h2 id="二级差分">二级差分</h2>
+<p><del>不知道它的官方叫法，姑且这么喊着。</del></p>
+<p>这种差分法，主要是对等式右边进行离散化的优化。</p>
+<p>直接给出式子： <span class="math display">\[
+\frac{T^{n+1}_m-T^n_m}{dt}=\frac{\alpha}{2}(\frac{T^n_{m+1}-2T^n_m+T^n_{m-1}}{dx^2}+\frac{T^{n+1}_{m+1}-2T^{n+1}_m+T^{n+1}_{m-1}}{dx^2})
+\]</span> 可以看到，等式右边分别在<span class="math inline">\(n和n+1\)</span>时刻取了斜率代替导数，并将二者平均，和前面仅用一处进行替代的方法显得更加精准。因此这也是一种很好的差分方法。</p>
+<p>想解这种差分法，关键还是形成<span class="math inline">\(n+1\)</span>时刻与<span class="math inline">\(n\)</span>时刻的迭代关系。在等式的右边，二者已经出现，结合左边来看，形成了高度的对称性，因此将他们分别移项和合并同类项即可得（我们设置<span class="math inline">\(\beta=\frac{\alpha dt}{2dx^2}\)</span>）： <span class="math display">\[
+\begin{bmatrix}  -(1+2\beta) &amp; -\beta &amp; \cdots &amp; \cdots \\ \beta &amp; -(1+2\beta) &amp; -\beta &amp; \cdots \\ &amp; \ddots &amp; \ddots &amp; \ddots \\ \cdots &amp; \beta &amp; -(1+2\beta) &amp; -\beta \\ \cdots &amp; \cdots &amp; \beta &amp; -(1+2\beta) \end{bmatrix}
+\begin{bmatrix}  T^{n+1}_1\\  T^{n+1}_2 \\ \vdots\\ T^{n+1}_{m-1}\\T^{n+1}_{m} \end{bmatrix}
+=
+\begin{bmatrix}  -1+2\beta &amp; -\beta &amp; \cdots &amp; \cdots \\ -\beta &amp; -1+2\beta &amp; -\beta &amp; \cdots \\ &amp; \ddots &amp; \ddots &amp; \ddots \\ \cdots &amp; -\beta &amp; -1+2\beta &amp; -\beta \\ \cdots &amp; \cdots &amp; -\beta &amp; -(1+2\beta) \end{bmatrix}
+\begin{bmatrix}  T^{n}_1\\  T^{n}_2 \\ \vdots\\ T^{n}_{m-1}\\T^{n}_{m} \end{bmatrix}
+\]</span></p>
+<p>无非是矩阵多了些，作为一个迭代求解，等式右边是完全已知的。再把等式左边的系数矩阵除过去，即可迭代出新一时刻的温度。</p>
+<h2 id="注">注</h2>
+<p>具体解相应的热力学问题时，需要把<span class="math inline">\(A\)</span>矩阵（即各类系数矩阵的一个称呼吧）的第一行和最后一行进行相应边界条件的替换，才能实现真正的使用。</p>
+<h2 id="后记">后记</h2>
+<p>学会离散化的求解，矩阵化的运算，也算踏入计算机运算的门槛了吧。</p>
+</div></section><div id="reward-container"><span class="hty-icon-button button-glow" id="reward-button" title="Donate" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === &quot;none&quot;) ? &quot;block&quot; : &quot;none&quot;;"><span class="icon iconify" data-icon="ri:hand-coin-line"></span></span><div id="reward-comment">I'm so cute. Please give me money.</div></div><ul class="post-copyright"><li class="post-copyright-author"><strong>Post author: </strong>zhiyaoXu</li><li class="post-copyright-link"><strong>Post link: </strong><a href="http://xzyvoid.github.io/post/chaff.html" title="差分法">http://xzyvoid.github.io/post/chaff.html</a></li><li class="post-copyright-license"><strong>Copyright Notice: </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 "><span class="icon iconify" data-icon="ri:creative-commons-line"></span><span class="icon iconify" data-icon="ri:creative-commons-by-line"></span><span class="icon iconify" data-icon="ri:creative-commons-nc-line"></span><span class="icon iconify" data-icon="ri:creative-commons-sa-line"></span></a> unless otherwise stated.</li></ul></article><div class="post-nav"><div class="post-nav-item"><a class="post-nav-prev" href="/post/luwenquxian.html" rel="prev" title="炉温曲线总结"><span class="icon iconify" data-icon="ri:arrow-left-s-line"></span><span class="post-nav-text">炉温曲线总结</span></a></div><div class="post-nav-item"><a class="post-nav-next" href="/post/xxhg.html" rel="next" title="曲线拟合、函数插值与线性回归"><span class="post-nav-text">曲线拟合、函数插值与线性回归</span><span class="icon iconify" data-icon="ri:arrow-right-s-line"></span></a></div></div></div><div class="hty-card" id="comment"></div></main><footer class="sidebar-translate" id="footer"><div class="copyright"><span>&copy; 2019 – 2022 </span><span class="with-love" id="animate"><span class="icon iconify" data-icon="ri:cloud-line"></span></span><span class="author"> zhiyaoXu</span></div><div class="powered"><span>Powered by <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> v6.2.0</span><span class="footer-separator">|</span><span>Theme - <a rel="noopener" href="https://github.com/YunYouJun/hexo-theme-yun" target="_blank"><span>Yun</span></a> v1.10.4</span></div></footer></div><a class="hty-icon-button" id="back-to-top" aria-label="back-to-top" href="#"><span class="icon iconify" data-icon="ri:arrow-up-s-line"></span><svg class="progress-circle-container" viewBox="0 0 100 100"><circle class="progress-circle" id="progressCircle" cx="50" cy="50" r="48" fill="none" stroke="#0078E7" stroke-width="2" stroke-linecap="round"></circle></svg></a></body></html>
